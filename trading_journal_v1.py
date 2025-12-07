@@ -15,7 +15,8 @@ creds = Credentials.from_service_account_info(
 client = gspread.authorize(creds)
 
 # YOUR SHEET NAME (MUST MATCH EXACTLY)
-sheet = client.open("Trading Journal").sheet1
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1AbCdEfGhIjKlMnOpQrStUvWxYz123456/edit#gid=0"
+sheet = client.open_by_url(SHEET_URL).sheet1
 
 
 # ---------------- LOAD EXISTING TRADES ----------------
