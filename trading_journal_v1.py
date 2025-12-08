@@ -2,80 +2,224 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import gspread
-from google.oauth2.service_account import Credentials
-
-# ----------------------------
-# Google Sheets Setup
-# ----------------------------
-# Your service account JSON details
-SERVICE_ACCOUNT_INFO = {
-    "type": "service_account",
-    "project_id": "formidable-app-409017",
-    "private_key_id": "fbbe19738f6c4b7d0796a45f8f52263b3b44ad81",
-    "private_key": """-----BEGIN PRIVATE KEY-----
-MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCySvZWiyybAaNZ
-ROgHX2lZHm6ex+OAgqg6+js7FvvbC7TeMTKh8QiW3uJt18FS+s+ULEUqSHAtbRTs
-V31FE9L7+V4YqzavqTCkj+Q1DhhGPh63Ql3qFFMge9ay2NAWMz/h2Pn+43tXXEBy
-GyOU+IKZkSq/pyHdV5f5QfidVe0749lMZn3bAXeLFUwSDWJBFpHzy916SPaIt8ft
-Ptsy5LNdPZPdzmP5ISM4j6dhjRQpSLox5OPFVKN653UoZJOzYyln2B79SvI67n4k
-rq0OQO7KB9Eb+S4ZiaARHKMDB4FpanQSg7zP3npQ/RH9iXdt5kz50l4L790OKVmF
-/OxEB3OzAgMBAAECggEABaqyR6/mvAqCSZ0SDuHudEGuXGeYCIaemDlJ1qf1W1H0
-7rb7mAAUOM9evQUFhQCpxljd3ektf5Qe/SAOwDpQE2gqoHgYpd6nyCM2qqUHCnyA
-92wplf4NYlPtUAPqITqBxkjiMULDsdQhzD6mk96OMBlYFX1XazSUhPyezUlk3+lh
-a+MYbGsjRnmP0DU4XF3fPOFFV4YtgOAQ1w08p7f/ouIjJ6YnDxQ89qvmgJd/XZGq
-Wgd+iZp4DfnDeDWgmoymoW8lN3n87OnAkV1n+e5momlaz+WEy9Q2MTSz2OlD9FPX
-uMddINRGWuCKCayB3fZCn4ylTKBNDoCRz5jjTZrQcQKBgQDjxs0UugPl0aKrF7XI
-A9dG0PSco9ZuJGLBWrZ9KR6defBB2sEIIW5Scj1mekpYb8ik3nN32KdJp5qXg5TM
-4eVfEX5d9n6X7XT8HHPEoGFjNW+9nohAaAAP0AYn+hMb2yRPVLacZsJALM+ygeuQ
-FGZ6ERoPcktGahS9ARtVKSfLCQKBgQDIYoJj52eL33GcNo8VUAWzwRK1nhhxpiLq
-59DKkGQ2t3Rl0zTYbzKAxzLFFTmk22q1YPsfWJUPDDmjg/xKDa5QSZi4t0HLoNcZ
-LzFHoo0CkgO1cN1dHurGR15e0MaSV1zft+Q+QGGFF2ie/u33wq+PVm+xId1oNYRJ
-6PVjrCBr2wKBgCrXzuVSI7+LkeRKnmeTyV9JmGkKLCAleenSjTa3kEmgkP9iDSLh
-XuXlFQV8hRVjWUMhkGh/eN/SxbIwDsIGz2T1XmaAIcmj4Xg2RdQ7MnY9q9nnwssS
-hMh0oWPNluCLdKXzUjHS5kC57QsvgsZj/+5/3v3+yofhFiuC1MhM6G45AoGBAJaH
-IaoIuAkjtgWCGqQI8++fVv2loHknM03BDGBObWmJEGA5c5YumgKRIPtZwW6tARD1
-pE9czMR8C4Rg7pF2i352esovp7ZewZaClANbAZBvvWd8PF3qjrSaAjM5pCFkjTjl
-vAhjdp5zAj2GBZ872YPUi5zFcrwIj7Kx1DymnchHAoGBAMsXkOZuXir29yw1qCys
-zC86xpWvFVLshwa6yte+mvLsfJAfVi8QCm9BEtx1n7pZJaz6jEiWyd7jW+BBDzZa
-xlz5jT0XHuKbpE4n4Yiyo/P5qSToWlmOusWpqXxL0dYN6uLRR4FyfAlzw/rrXCAG
-nF6sl5oCdYdLzusE/mW8YO1W
------END PRIVATE KEY-----""",
-    "client_email": "swayamstradingjournal@formidable-app-409017.iam.gserviceaccount.com",
-    "client_id": "107072845707151606684",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/swayamstradingjournal@formidable-app-409017.iam.gserviceaccount.com"
-}
-
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-CREDS = Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO, scopes=SCOPES)
-GS_CLIENT = gspread.authorize(CREDS)
-SHEET_NAME = "Trading Journal"
-try:
-    SHEET = GS_CLIENT.open(SHEET_NAME).sheet1
-except gspread.SpreadsheetNotFound:
-    # If the sheet does not exist, create it
-    SHEET = GS_CLIENT.create(SHEET_NAME).sheet1
-    # Share with your service account email
-    SHEET.share(SERVICE_ACCOUNT_INFO["client_email"], perm_type='user', role='writer')
 
 # ----------------------------
 # Initialize journal (in-memory)
 # ----------------------------
 if "journal" not in st.session_state:
-    # Load existing trades from Google Sheets
-    try:
-        data = SHEET.get_all_records()
-        st.session_state.journal = data
-    except Exception as e:
-        st.session_state.journal = []
+    st.session_state.journal = []
 
 # ----------------------------
-# (Keep your entire confluence scoring function unchanged)
+# Confluence Scoring Function
 # ----------------------------
-# ... (Paste the calculate_confluence function exactly as in your code)
+def calculate_confluence(planned_direction, htf_trends, ltf_trends, ltf_expected, fib_level, candle_type,
+                         session, structure_change, ob_sd_conflict, liquidity_sweep):
+    score = 0
+    pos_details = {}
+    neg_details = {}
+
+    # Weights
+    weights = {
+        "HTF Alignment": 20,
+        "LTF Alignment": 25,
+        "Planned Direction": 15,
+        "Expected LTF Structure": 10,
+        "Fib Level Tapped": 10,
+        "Entry Candle Confirmation": 10,
+        "OB/SD Conflict": -10,
+        "Liquidity Sweep": -10,
+        "Session Favorability": 20
+    }
+
+    # Helper function to check trend alignment with planned direction
+    def aligns(trend, direction):
+        if direction == "Buy":
+            return trend == "Bullish"
+        elif direction == "Sell":
+            return trend == "Bearish"
+        return False
+
+    # --- Planned Direction ---
+    # Check if planned direction is valid
+    if planned_direction not in ["Buy", "Sell"]:
+        planned_direction = "None"
+
+    # --- HTF Alignment (20%) ---
+    # 3 timeframes: Weekly, Daily, 4H
+    htf_timeframes = ["Weekly", "Daily", "4H"]
+    htf_match_count = 0
+    for tf in htf_timeframes:
+        if aligns(htf_trends.get(tf, "None"), planned_direction):
+            htf_match_count += 1
+    # Positive points if at least 2 of 3 align
+    if htf_match_count >= 2:
+        pos_details["HTF Alignment"] = weights["HTF Alignment"]
+        score += weights["HTF Alignment"]
+    else:
+        pos_details["HTF Alignment"] = 0
+
+    # --- LTF Alignment (25%) ---
+    # 4 timeframes: 1H, 30M, 15M, 5M
+    ltf_major = ["1H", "30M"]
+    ltf_minor = ["15M", "5M"]
+    ltf_major_aligned = all(aligns(ltf_trends.get(tf, "None"), planned_direction) for tf in ltf_major)
+    ltf_major_misaligned = all(not aligns(ltf_trends.get(tf, "None"), planned_direction) for tf in ltf_major)
+
+    ltf_score = 0
+    ltf_pos = 0
+    ltf_neg = 0
+
+    if ltf_major_aligned:
+        # Major positive contribution
+        ltf_pos += weights["LTF Alignment"] * 0.7  # 70% of LTF weight
+        # Minor timeframes contribute minor positive or negative
+        for tf in ltf_minor:
+            if aligns(ltf_trends.get(tf, "None"), planned_direction):
+                ltf_pos += (weights["LTF Alignment"] * 0.3) / 2  # split minor weight
+            else:
+                ltf_neg += (weights["LTF Alignment"] * 0.3) / 2
+    elif ltf_major_misaligned:
+        # Major negative contribution
+        ltf_neg += weights["LTF Alignment"] * 0.7
+        # Minor timeframes contribute minor negative or positive
+        for tf in ltf_minor:
+            if aligns(ltf_trends.get(tf, "None"), planned_direction):
+                ltf_pos += (weights["LTF Alignment"] * 0.3) / 2
+            else:
+                ltf_neg += (weights["LTF Alignment"] * 0.3) / 2
+    else:
+        # Mixed major timeframes - neutral base
+        # Minor timeframes contribute minor positive or negative
+        for tf in ltf_minor:
+            if aligns(ltf_trends.get(tf, "None"), planned_direction):
+                ltf_pos += (weights["LTF Alignment"] * 0.3) / 2
+            else:
+                ltf_neg += (weights["LTF Alignment"] * 0.3) / 2
+
+    ltf_score = ltf_pos - ltf_neg
+    pos_details["LTF Alignment"] = round(max(ltf_score, 0), 2)
+    neg_details["LTF Alignment"] = round(min(ltf_score, 0), 2)
+    score += ltf_score
+
+    # --- Planned Trade Direction (15%) ---
+    # Check if planned direction matches dominant HTF trend (majority)
+    # We'll reuse htf_match_count from HTF Alignment
+    if planned_direction != "None":
+        if htf_match_count >= 2:
+            pos_details["Planned Trade Direction Alignment"] = weights["Planned Direction"]
+            score += weights["Planned Direction"]
+        else:
+            neg_details["Planned Trade Direction Alignment"] = -weights["Planned Direction"]
+            score -= weights["Planned Direction"]
+    else:
+        pos_details["Planned Trade Direction Alignment"] = 0
+
+    # --- Expected LTF Structure (10%) ---
+    # For Buy: HL preferred > HH; for Sell: LH preferred > LL
+    # 1H and 30M dominant, 15M and 5M secondary
+    structure_score = 0
+    structure_pos = 0
+    structure_neg = 0
+
+    # Define preferred structures
+    preferred_structures = {
+        "Buy": ["HL", "HH"],
+        "Sell": ["LH", "LL"]
+    }
+    secondary_structures = {
+        "Buy": ["HH", "HL"],
+        "Sell": ["LL", "LH"]
+    }
+
+    # Function to score one timeframe expected structure
+    def score_structure(tf):
+        actual = ltf_expected.get(f"{tf} Expected", "None")
+        if actual == "None":
+            return 0
+        if planned_direction == "Buy":
+            if actual == "HL":
+                return weights["Expected LTF Structure"] * 0.4 if tf in ["1H", "30M"] else weights["Expected LTF Structure"] * 0.15
+            elif actual == "HH":
+                return weights["Expected LTF Structure"] * 0.3 if tf in ["1H", "30M"] else weights["Expected LTF Structure"] * 0.1
+            elif actual in ["LH", "LL"]:
+                return -weights["Expected LTF Structure"] * 0.4 if tf in ["1H", "30M"] else -weights["Expected LTF Structure"] * 0.15
+            else:
+                return 0
+        elif planned_direction == "Sell":
+            if actual == "LH":
+                return weights["Expected LTF Structure"] * 0.4 if tf in ["1H", "30M"] else weights["Expected LTF Structure"] * 0.15
+            elif actual == "LL":
+                return weights["Expected LTF Structure"] * 0.3 if tf in ["1H", "30M"] else weights["Expected LTF Structure"] * 0.1
+            elif actual in ["HL", "HH"]:
+                return -weights["Expected LTF Structure"] * 0.4 if tf in ["1H", "30M"] else -weights["Expected LTF Structure"] * 0.15
+            else:
+                return 0
+        return 0
+
+    for tf in ["1H", "30M", "15M", "5M"]:
+        val = score_structure(tf)
+        if val > 0:
+            structure_pos += val
+        else:
+            structure_neg += val
+
+    structure_score = structure_pos + structure_neg
+    pos_details["Expected LTF Structure"] = round(structure_pos, 2)
+    neg_details["Expected LTF Structure"] = round(structure_neg, 2)
+    score += structure_score
+
+    # --- Fib Level Tapped (10%) ---
+    if fib_level != "None":
+        pos_details["Fib Level Tapped"] = weights["Fib Level Tapped"]
+        score += weights["Fib Level Tapped"]
+    else:
+        neg_details["Fib Level Missed"] = -weights["Fib Level Tapped"]
+        score -= weights["Fib Level Tapped"]
+
+    # --- Entry Candle Confirmation (10%) ---
+    if candle_type != "None":
+        pos_details["Entry Candle Confirmation"] = weights["Entry Candle Confirmation"]
+        score += weights["Entry Candle Confirmation"]
+    else:
+        neg_details["Entry Candle Failed"] = -weights["Entry Candle Confirmation"]
+        score -= weights["Entry Candle Confirmation"]
+
+    # --- OB / SD Conflict (-10%) ---
+    if ob_sd_conflict:
+        neg_details["OB/SD Conflict"] = weights["OB/SD Conflict"]
+        score -= weights["OB/SD Conflict"]
+    else:
+        pos_details["OB/SD Clear"] = abs(weights["OB/SD Conflict"])
+        score += abs(weights["OB/SD Conflict"])
+
+    # --- Liquidity Sweep (-10%) ---
+    if liquidity_sweep:
+        neg_details["Liquidity Sweep"] = weights["Liquidity Sweep"]
+        score -= weights["Liquidity Sweep"]
+    else:
+        pos_details["No Liquidity Sweep"] = abs(weights["Liquidity Sweep"])
+        score += abs(weights["Liquidity Sweep"])
+
+    # --- Session Favorability (20%) ---
+    if session != "None":
+        pos_details["Session Favorability"] = weights["Session Favorability"]
+        score += weights["Session Favorability"]
+    else:
+        neg_details["Session Weak"] = -weights["Session Favorability"]
+        score -= weights["Session Favorability"]
+
+    # --- Structure Change (against bias) ---
+    if structure_change:
+        neg_details["Structure Change"] = -10  # Penalize structure change mildly
+        score -= 10
+    else:
+        pos_details["No Structure Change"] = 10
+        score += 10
+
+    # Limit score 0-100
+    score = max(min(score, 100), 0)
+
+    return round(score,2), pos_details, neg_details
 
 # ----------------------------
 # Streamlit UI
@@ -154,13 +298,13 @@ with st.form("new_trade_form"):
         
         # Save trade to journal
         trade_entry = {
-            "DateTime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "DateTime": datetime.now(),
             "Trade Number": trade_number,
             "Planned Direction": planned_direction,
             "Session": session,
-            "HTF Trend": str(htf_trends),
-            "LTF Trend": str(ltf_trends),
-            "LTF Expected": str(ltf_expected),
+            "HTF Trend": htf_trends,
+            "LTF Trend": ltf_trends,
+            "LTF Expected": ltf_expected,
             "Fibonacci Level": fib_level,
             "Entry Candle": candle_type,
             "Structure Change": structure_change,
@@ -176,10 +320,39 @@ with st.form("new_trade_form"):
             "Trade Result": result,
         }
         st.session_state.journal.append(trade_entry)
-        
-        # Save to Google Sheets
-        try:
-            SHEET.append_row(list(trade_entry.values()))
-            st.success("Trade saved to Google Sheets successfully!")
-        except Exception as e:
-            st.error(f"Error saving to Google Sheets: {e}")
+        st.success("Trade saved to journal!")
+
+# ----------------------------
+# Trade Journal Table
+# ----------------------------
+st.header("2️⃣ Trade Journal")
+if st.session_state.journal:
+    df = pd.DataFrame(st.session_state.journal)
+    st.dataframe(df)
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button("Download CSV", csv, "trade_journal.csv", "text/csv")
+else:
+    st.write("No trades yet.")
+
+# ----------------------------
+# Analytics Dashboard (Simple)
+# ----------------------------
+st.header("3️⃣ Analytics Dashboard")
+if st.session_state.journal:
+    df = pd.DataFrame(st.session_state.journal)
+    
+    # Average Confluence Score by Session
+    avg_session = df.groupby("Session")["Confluence Score"].mean()
+    st.subheader("Average Confluence Score by Session")
+    st.bar_chart(avg_session)
+    
+    # Confluence Score Distribution
+    st.subheader("Confluence Score Distribution")
+    st.bar_chart(df["Confluence Score"])
+    
+    # Example: Fib Level Success Rate
+    st.subheader("Trades per Fib Level")
+    fib_counts = df["Fibonacci Level"].value_counts()
+    st.bar_chart(fib_counts)
+else:
+    st.write("No analytics available yet.")
