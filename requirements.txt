@@ -1,5 +1,6 @@
 streamlit
 pandas
 gspread
-oauth2client
-Pillow   # for image handling
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
