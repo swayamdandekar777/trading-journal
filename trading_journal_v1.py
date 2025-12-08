@@ -2,18 +2,54 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from streamlit_gsheets import GSheetsConnection
 
 # ----------------------------
-# Initialize journal (in-memory)
+# 1. Cloud Database Connection
 # ----------------------------
+# Connect to the Google Sheet defined in secrets.toml
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+def load_journal():
+    """Loads the journal from Google Sheets to ensure all users see the same data."""
+    try:
+        # Read data from the sheet named 'Sheet1'
+        df = conn.read(worksheet="Sheet1")
+        # If the sheet is empty or new, return empty list
+        if df.empty:
+            return []
+        # Clean up empty rows that might occur
+        df = df.dropna(how="all")
+        # Convert back to list of dicts to match your original structure
+        return df.to_dict('records')
+    except Exception:
+        return []
+
+def save_to_cloud(journal_data):
+    """Saves the entire journal list to Google Sheets."""
+    try:
+        df = pd.DataFrame(journal_data)
+        # Update the sheet immediately
+        conn.update(worksheet="Sheet1", data=df)
+        st.cache_data.clear() # Clear cache so updates show immediately
+    except Exception as e:
+        st.error(f"Error saving to cloud: {e}")
+
+# ----------------------------
+# Initialize journal (Sync with Cloud)
+# ----------------------------
+# We load fresh from cloud on every app rerun
 if "journal" not in st.session_state:
-    st.session_state.journal = []
+    st.session_state.journal = load_journal()
+else:
+    # Optional: Force refresh to ensure we see other people's trades
+    st.session_state.journal = load_journal()
 
 # ----------------------------
-# Confluence Scoring Function
+# Confluence Scoring Function (YOUR ORIGINAL LOGIC)
 # ----------------------------
 def calculate_confluence(planned_direction, htf_trends, ltf_trends, ltf_expected, fib_level, candle_type,
-                         session, structure_change, ob_sd_conflict, liquidity_sweep):
+                          session, structure_change, ob_sd_conflict, liquidity_sweep):
     score = 0
     pos_details = {}
     neg_details = {}
@@ -224,7 +260,8 @@ def calculate_confluence(planned_direction, htf_trends, ltf_trends, ltf_expected
 # ----------------------------
 # Streamlit UI
 # ----------------------------
-st.title("🔥 Trading Journal & Confluence AI - Version 1 (Updated Timeframes & Scoring)")
+st.title("🔥 Trading Journal & Confluence AI - Version 1 (Cloud Shared)")
+st.caption("Trades are saved to the shared Google Sheet and visible to all users.")
 
 st.header("1️⃣ New Trade Entry")
 trade_number = st.selectbox("Which Trade Number is This?", ["1", "2", "3", "4", "5"])
@@ -272,7 +309,7 @@ with st.form("new_trade_form"):
     screenshot = st.file_uploader("Upload Trade Screenshot", type=["png", "jpg", "jpeg"])
     result = st.selectbox("Trade Result", ["None", "TP Hit", "SL Hit", "Breakeven"])
     
-    submitted = st.form_submit_button("Calculate Confluence Score")
+    submitted = st.form_submit_button("Calculate Confluence & Save to Cloud")
     
     if submitted:
         score, pos_details, neg_details = calculate_confluence(
@@ -298,13 +335,14 @@ with st.form("new_trade_form"):
         
         # Save trade to journal
         trade_entry = {
-            "DateTime": datetime.now(),
+            "DateTime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "Trade Number": trade_number,
             "Planned Direction": planned_direction,
             "Session": session,
-            "HTF Trend": htf_trends,
-            "LTF Trend": ltf_trends,
-            "LTF Expected": ltf_expected,
+            # Flatten dicts to strings for CSV/Sheet compatibility
+            "HTF Trend": str(htf_trends),
+            "LTF Trend": str(ltf_trends),
+            "LTF Expected": str(ltf_expected),
             "Fibonacci Level": fib_level,
             "Entry Candle": candle_type,
             "Structure Change": structure_change,
@@ -319,18 +357,29 @@ with st.form("new_trade_form"):
             "Screenshot": screenshot.name if screenshot else None,
             "Trade Result": result,
         }
+        
+        # Append to session state
         st.session_state.journal.append(trade_entry)
-        st.success("Trade saved to journal!")
+        
+        # --- SAVE TO GOOGLE SHEETS ---
+        with st.spinner("Syncing to Google Cloud..."):
+            save_to_cloud(st.session_state.journal)
+        
+        st.success("Trade saved to Shared Cloud Journal!")
+        # Rerun to show updated table immediately
+        st.rerun()
 
 # ----------------------------
 # Trade Journal Table
 # ----------------------------
-st.header("2️⃣ Trade Journal")
+st.header("2️⃣ Trade Journal (Shared)")
 if st.session_state.journal:
     df = pd.DataFrame(st.session_state.journal)
     st.dataframe(df)
+    
+    # Simple CSV download (optional)
     csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button("Download CSV", csv, "trade_journal.csv", "text/csv")
+    st.download_button("Download CSV Backup", csv, "trade_journal.csv", "text/csv")
 else:
     st.write("No trades yet.")
 
@@ -342,17 +391,20 @@ if st.session_state.journal:
     df = pd.DataFrame(st.session_state.journal)
     
     # Average Confluence Score by Session
-    avg_session = df.groupby("Session")["Confluence Score"].mean()
-    st.subheader("Average Confluence Score by Session")
-    st.bar_chart(avg_session)
+    if "Session" in df.columns and "Confluence Score" in df.columns:
+        avg_session = df.groupby("Session")["Confluence Score"].mean()
+        st.subheader("Average Confluence Score by Session")
+        st.bar_chart(avg_session)
     
     # Confluence Score Distribution
-    st.subheader("Confluence Score Distribution")
-    st.bar_chart(df["Confluence Score"])
+    if "Confluence Score" in df.columns:
+        st.subheader("Confluence Score Distribution")
+        st.bar_chart(df["Confluence Score"])
     
     # Example: Fib Level Success Rate
-    st.subheader("Trades per Fib Level")
-    fib_counts = df["Fibonacci Level"].value_counts()
-    st.bar_chart(fib_counts)
+    if "Fibonacci Level" in df.columns:
+        st.subheader("Trades per Fib Level")
+        fib_counts = df["Fibonacci Level"].value_counts()
+        st.bar_chart(fib_counts)
 else:
     st.write("No analytics available yet.")
